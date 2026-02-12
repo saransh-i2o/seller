@@ -6,8 +6,9 @@ import { PageSellerProfile } from "./page-seller-profile"
 import { PageEnforcement } from "./page-enforcement"
 import { PageViolations } from "./page-violations"
 import { PageAnalytics } from "./page-analytics"
-import { Download, Printer, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, Printer, ChevronLeft, ChevronRight, FileCode } from "lucide-react"
 import type { SellerReport } from "@/lib/report-data"
+import { generateJrxml } from "@/lib/generate-jrxml"
 
 interface ReportShellProps {
   data: SellerReport
@@ -27,6 +28,19 @@ export function ReportShell({ data }: ReportShellProps) {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleDownloadJrxml = () => {
+    const xml = generateJrxml(data)
+    const blob = new Blob([xml], { type: "application/xml;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `Seller_Investigation_${data.profile.resellerName}_${data.reportGeneratedDate.replace(/\s/g, "_")}.jrxml`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   const handleDownloadPdf = async () => {
@@ -240,6 +254,13 @@ export function ReportShell({ data }: ReportShellProps) {
             >
               <Printer className="h-4 w-4" />
               Print
+            </button>
+            <button
+              onClick={handleDownloadJrxml}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-[#1B2A3D] bg-[#F7F8FA] border border-[#D1D8E0] rounded hover:bg-[#E8ECF0] transition-colors"
+            >
+              <FileCode className="h-4 w-4" />
+              Download JRXML
             </button>
             <button
               onClick={handleDownloadPdf}
