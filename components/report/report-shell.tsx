@@ -6,7 +6,7 @@ import { PageSellerProfile } from "./page-seller-profile"
 import { PageEnforcement } from "./page-enforcement"
 import { PageViolations } from "./page-violations"
 import { PageAnalytics } from "./page-analytics"
-import { Download, Printer, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, Printer, ChevronLeft, ChevronRight, FileJson } from "lucide-react"
 import type { SellerReport } from "@/lib/report-data"
 
 interface ReportShellProps {
@@ -27,6 +27,90 @@ export function ReportShell({ data }: ReportShellProps) {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleDownloadJrxml = () => {
+    const jrxmlTemplate = `<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+  name="SellerInvestigationReport" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30">
+  <style name="Base" isDefault="true" fontName="Arial" fontSize="10"/>
+  <style name="Title" forecolor="#0F2B46" fontName="Arial" fontSize="20" isBold="true"/>
+  <style name="Heading" forecolor="#0F2B46" fontName="Arial" fontSize="14" isBold="true"/>
+  <style name="SubHeading" forecolor="#5C6B7A" fontName="Arial" fontSize="11"/>
+  <parameter name="ReportTitle" class="java.lang.String"/>
+  <parameter name="BusinessName" class="java.lang.String"/>
+  <parameter name="GeneratedDate" class="java.lang.String"/>
+  <field name="sellerName" class="java.lang.String"/>
+  <field name="marketplaceName" class="java.lang.String"/>
+  <field name="violationType" class="java.lang.String"/>
+  <field name="dateObserved" class="java.lang.String"/>
+  <group name="SellerGroup">
+    <groupExpression><![CDATA[\$F{sellerName}]]></groupExpression>
+  </group>
+  <pageHeader>
+    <band height="80" splitType="Stretch">
+      <rectangle>
+        <reportElement x="0" y="0" width="535" height="80" backcolor="#0F2B46"/>
+      </rectangle>
+      <staticText>
+        <reportElement style="Title" x="20" y="20" width="495" height="30"/>
+        <text><![CDATA[Seller Investigation Report]]></text>
+      </staticText>
+      <textField>
+        <reportElement style="SubHeading" x="20" y="50" width="495" height="20"/>
+        <textFieldExpression><![CDATA[\$P{BusinessName}]]></textFieldExpression>
+      </textField>
+    </band>
+  </pageHeader>
+  <pageFooter>
+    <band height="20" splitType="Stretch">
+      <line>
+        <reportElement x="0" y="10" width="535" height="1" forecolor="#D1D8E0"/>
+      </line>
+      <textField evaluationTime="Report">
+        <reportElement x="450" y="0" width="85" height="20" style="Base"/>
+        <textAlignment horizontalAlignment="Right"/>
+        <textFieldExpression><![CDATA["Page " + \$V{PAGE_NUMBER}]]></textFieldExpression>
+      </textField>
+      <staticText>
+        <reportElement style="Base" x="20" y="0" width="430" height="20" forecolor="#5C6B7A"/>
+        <text><![CDATA[Powered by i2o Technologies | Confidential]]></text>
+      </staticText>
+    </band>
+  </pageFooter>
+  <detail>
+    <band height="100" splitType="Stretch">
+      <textField>
+        <reportElement style="Heading" x="20" y="10" width="495" height="20"/>
+        <textFieldExpression><![CDATA[\$F{sellerName}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement style="SubHeading" x="20" y="35" width="200" height="15"/>
+        <textFieldExpression><![CDATA["Marketplace: " + \$F{marketplaceName}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement style="SubHeading" x="220" y="35" width="295" height="15"/>
+        <textFieldExpression><![CDATA["Violation: " + \$F{violationType}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement style="SubHeading" x="20" y="55" width="495" height="15"/>
+        <textFieldExpression><![CDATA["Date Observed: " + \$F{dateObserved}]]></textFieldExpression>
+      </textField>
+    </band>
+  </detail>
+</jasperReport>`
+
+    const blob = new Blob([jrxmlTemplate], { type: "application/xml" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `Seller_Investigation_${data.profile.resellerName}_${data.reportGeneratedDate.replace(/\s/g, "_")}.jrxml`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   const handleDownloadPdf = async () => {
@@ -240,6 +324,13 @@ export function ReportShell({ data }: ReportShellProps) {
             >
               <Printer className="h-4 w-4" />
               Print
+            </button>
+            <button
+              onClick={handleDownloadJrxml}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-[#1B2A3D] bg-[#F7F8FA] border border-[#D1D8E0] rounded hover:bg-[#E8ECF0] transition-colors"
+            >
+              <FileJson className="h-4 w-4" />
+              Download JRXML
             </button>
             <button
               onClick={handleDownloadPdf}
